@@ -1,6 +1,16 @@
 // https://bricks.stackexchange.com/questions/288/what-are-the-dimensions-of-a-lego-brick
 
+use <base3.scad>;
 
+
+e=1; // epsilon
+/*
+ batch  param
+ 1  tdg=0.3
+ 2  tdg=0.2
+ 3  tdg=0.1
+
+*/
 //brick_h=9.7;
 
 // wall thickness
@@ -11,17 +21,18 @@
 
 
 // under tube diameter . higher value == tighter grip
-td=6.51;//6.51;
+tdg=0.1;
+td=6.51-tdg;//6.51;
 
 
 // -- helpers ----------------------------------------------------------
 // rounded cylinder
-module rounded_cylinder(d,h,rt,rb,fn=36){
-    cylinder(d2=d,d1=d-rb,h=rb,$fn=fn);
+module rounded_cylinder(d,h,rt,rtw,rb,rbw,fn=36){
+    cylinder(d2=d,d1=d-rbw,h=rb,$fn=fn);
     translate([0,0,rb])
     cylinder(d=d,h=h-rb-rt,$fn=fn);
     translate([0,0,h-rt])
-    cylinder(d1=d,d2=d-rt,h=rt,$fn=fn);    
+    cylinder(d1=d,d2=d-rtw,h=rt,$fn=fn);    
 }
 
 //rounded_cylinder(d=10,h=20,radius=2);
@@ -88,6 +99,59 @@ module roundedcube(xx, yy, zz, radius,x=[1,1,1,1],y=[1,1,1,1],z=[1,1,1,1]) {
 
 // -- end of helpers ----------------------------------------------------------
 
+// base round corner radius
+basercr=1;
+
+// x,y, lowth: dimensions in mm
+// lowts transitions steps
+// dx and dy : total difference in x and y after transition
+// t: thickness
+module base3transition(x,y,lowth,lowts,dx,dy,t,fill){
+     for(by=[0:lowth/lowts:lowth])
+            translate([by*(dx/lowth)/2,by*(dy/lowth)/2,lowth-by])
+            roundedsquaretube(w=x-by*(dx/lowth),l=y-by*(dy/lowth),h=lowth/lowts,t=t,r=basercr,fill=fill);   
+        
+}
+module base3body(xmax,ymax,brick_h,fill){
+    x=xmax*8-0.2;
+    y=ymax*8-0.2;
+    h=brick_h;
+    r=0.2;
+
+    lowth=0;   
+    lowts=2;
+    lowtw=0.1;   
+    translate([-3.9,-4+0.1,0]){
+         translate([0,0,-h+lowth])
+     roundedsquaretube(w=x,l=y,h=brick_h-lowth-bt,t=t,r=basercr,fill=fill);
+     translate([0,0,-h])
+     base3transition(x,y,lowth,lowts,lowtw,lowtw,t,fill);
+     
+      
+    }
+}
+module base3(xmax,ymax,brick_h){
+    
+    // walls
+    base3body(xmax,ymax,brick_h,fill=false);
+    
+    x=xmax*8-0.2;
+    y=ymax*8-0.2;
+    h=brick_h;
+    r=0.2;
+
+  
+     translate([-3.9,-4+0.1,-bt]){
+     // base top    
+   // translate([0,0,-bt])
+         
+         for(by=[0:bt/4:bt])
+            translate([by/2,by/2,by])
+           roundedsquaretube(w=x-by,l=y-by,h=bt/4,t=t,r=basercr,fill=true);
+    //roundedcube(x,y,bt,r);
+     }
+ 
+}
 
 module base2(xmax,ymax,brick_h){
    
@@ -156,19 +220,40 @@ module base_stud_holes(xmax,ymax){
 //studs();
 //base();
     
-
+module stud(sh){
+    difference(){
+            
+    union(){
+        rounded_cylinder(d=4.8,fn=36,h=sh,rt=0.2,rtw=0.2,rb=0,rbw=0);
+          translate([0,0,sh-0.5-0.2])   cylinder(d=4.8+tdg,$fn=36,h=0.5);
+    }
+            
+             translate([0,0,sh-sh-e])
+             cylinder(d=3,$fn=36,h=sh+e+e);
+        }
+    
+}
     
 
 module studs(xmax,ymax){
         
+    // stud height
+    sh=1.95;
 // studs    
 //translate([0,0,1])
 for(x=[0:1:xmax-1])
     for(y=[0:1:ymax-1])
-        translate([x*8,y*8,0])
-        difference(){
-        rounded_cylinder(d=4.8,fn=36,h=1.7,rt=0.2,rb=0);
-        cylinder(d=3,$fn=36,h=0.7);
+        translate([x*8,y*8,0]){
+            
+              //if (ymax==1){
+//                if (x==0 && y==0) translate([-0.95,-1,1.6])  scale([0.2,0.2,0.2]) linear_extrude(height=1)   text("B",font = "Liberation Sans:style=Bold");   
+                    //if (x==1 && y==0) translate([-0.95,-1,1.6])   scale([0.2,0.2,0.2]) linear_extrude(height=1)   text("C",font = "Liberation Sans:style=Bold");   
+                 //} else{
+                    //if (x==0 && y==0) translate([-0.95,-1,1.6])  scale([0.2,0.2,0.2]) linear_extrude(height=1)  text("C",font = "Liberation Sans:style=Bold");                   
+                     //if (x==0 && y==1) translate([-0.95,-1,1.6]) scale([0.2,0.2,0.2]) linear_extrude(height=1)  text("B",font = "Liberation Sans:style=Bold");   
+                //}
+                    
+        stud(sh);
         }
 }
 
@@ -195,12 +280,19 @@ module under_tubes_skin(xmax,ymax,brick_h){
 
 }
 
+//module under_tubes_tube(d,h){
+        //rounded_cylinder(d=d,fn=36,h=h,rb=1,rbw=-0.2,rt=0,rtw=0);
+//}
+
 module under_tubes_tubes(xmax,ymax,brick_h){
 for(x=[0:1:xmax])
     for(y=[0:1:ymax])
-        translate([x*8-8/2,y*8-8/2,-brick_h])
-        rounded_cylinder(d=td,fn=36,h=brick_h,rb=0,rt=0);
+        translate([x*8-8/2,y*8-8/2,-brick_h]){
 
+        cylinder(d=td,$fn=36,h=brick_h);
+        cylinder(d=td+tdg,$fn=36,h=0.3);
+        }
+  //  under_tubes_tube(d=td,h=brick_h);
 }
 
 
@@ -208,8 +300,8 @@ module under_tubes_hollow(xmax,ymax,brick_h){
 
 for(x=[0:1:xmax])
     for(y=[0:1:ymax])
-        translate([x*8-8/2,y*8-8/2,-brick_h])
-        cylinder(d=td-t*2,$fn=36,h=brick_h-1);
+        translate([x*8-8/2,y*8-8/2,-brick_h-1])
+        cylinder(d=td-t*2,$fn=36,h=brick_h+2);        
 }
 module under_tubes(xmax,ymax,brick_h){
     
@@ -261,43 +353,63 @@ for(y=[0:1:ymax-1]){
 }
 }
     
-module brick(xmax,ymax,brick_h,studs=true,holes=false){
-    hd=5;
+module brick(xmax,ymax,brick_h,studs=true,holes=false,support=false){
+    hd=5.1;
    difference(){ 
        union(){
-  under_tubes(xmax,ymax,brick_h);
+  
   //under_rails(xmax,ymax,brick_h);
   if (studs)
     studs(xmax,ymax);
-  base2(xmax,ymax,brick_h);
   
-  
-  
-  
+  intersection(){
+  base3body(xmax,ymax,brick_h,fill=true);
+  under_tubes(xmax,ymax,brick_h);
+ }
+  base3(xmax,ymax,brick_h);
+      if (holes!=false) { 
   for(y=[0:1:ymax-2]){    
     translate([-4+0.1,y*8+4,-4]) rotate([0,90,0]) cylinder(d=hd+t*2,h=xmax*8-0.2,$fn=36);
+  }
   }
   }
   for(y=[0:1:ymax-2]){    
     translate([-4,y*8+4,-4]) 
   if (holes=="round") {    
       rotate([0,90,0]) cylinder(d=hd,h=xmax*8,$fn=36);
+      // transform the hole into an oval shape to compensate overhang printing
+        translate([0,0,0.5])  rotate([0,90,0]) cylinder(d=hd-0.5,h=xmax*8,$fn=36);
   }
   else if (holes=="bar") { 
      translate([0,0,0])    
-     rotate([0,90,90])  bar_hole(xmax*8);
+     rotate([0,90,90]) 
+       rotate([90,0,0]) bar_hole(xmax*8);
+  }
+  
   }
   }
-  }
+  
+if (support){
+   translate([-3,-4+0.3-10,-brick_h]) cube([0.8,10,0.2]);   
+   translate([xmax*8-5,-4+0.3-10,-brick_h]) cube([0.8,10,0.2]);
+   translate([-3,-4-0.7+0.3+ymax*8,-brick_h]) cube([0.8,10,0.2]);
+   translate([xmax*8-5,-4-0.7+0.3+ymax*8,-brick_h]) cube([0.8,10,0.2]);
+  
+  translate([-3,-4+0.3-10,-brick_h]) cube([xmax*8-1.2,3,0.2]);
+  translate([-3,-4-0.7+0.3+ymax*8+10-3,-brick_h]) cube([xmax*8-1.2,3,0.2]);
 }
 
+}
 
 //base();
 //base2();
 
 
 
-module bar(l){
+module bar(u){
+    
+    
+ l=u*8-1;   
  rotate([90,45,0])
     union(){
  t=1.8-0.4;
@@ -309,12 +421,19 @@ module bar(l){
     
  // support 
     rotate([0,0,45])
+        translate([0.8,-0.78,0])
     union(){
-    translate([0.6,-0.78,-10]) cube([0.8,0.2,l+20]);
-    translate([2.8,-0.78,-10]) cube([0.8,0.2,l+20]);
+    translate([0,0,-5]) cube([0.8,0.2,l+10]);
+    translate([2,0,-5]) cube([0.8,0.2,l+10]);
+    translate([-4,0,-5]) 
+        cube([10,0.2,2]);
+    translate([-4,0,l+5]) 
+        cube([10,0.2,2]);    
     }
 }
 }//bar(48.4);
+
+
 
  //neg_round_edge(10,5);
 //rotate([90,45,0])
@@ -324,9 +443,9 @@ module bar(l){
 
 
 module bar_hole(l){
-  t=1.8+0.4;
-  d=4.7+0.4;   
-  rotate([90,0,0])
+  t=1.8+0.3;
+  d=4.7+0.3;   
+
   translate([-t/2,-d/2,0])
   union(){
   cube([t,d,l]);
@@ -338,12 +457,57 @@ module bar_hole(l){
 
 
 
-STANDARD_H=9.7-0.15;
-PLATE_H=3.1;
+module washer(h,hole,support=false){
+    difference(){
+      
+            if (h>1) {
+    cylinder(d=6.4,h=h,$fn=36);    
+    cylinder(d=7.4,h=1,$fn=36);
+              translate([0,0,h-1])
+             cylinder(d=7.4,h=1,$fn=36);    
+        } else {
+            cylinder(d=7.4,h=h,$fn=36);
+        }
+        
+        
+          translate([0,0,-1])
+        if (hole=="round")
+        cylinder(d=5.2,h=h+2,$fn=36);
+        if (hole=="bar")
+        bar_hole(h+2);
+    }
+    
+    if (support){
+    translate([-5,3,0])
+      cube([10,2,0.2]);
+      translate([-5,-5,0])
+      cube([10,2,0.2]);
+    }
+}
+
+
+// not very useful...
+module washerSet(hole){
+washer(4*1.9,hole=hole);
+translate([8,0,0])
+washer(3*1.9,hole=hole);
+translate([16,0,0])
+washer(2*1.9,hole=hole);
+translate([24,0,0])
+washer(1*1.9,hole=hole);
+}
+//washer(h=1,hole="bar");
+//translate([0,8,0])washerSet("round");
+
+//stud(10);
+
+//under_tubes_tube(d=td,h=10);
+STANDARD_H=9.7-0.15-0.3;
+PLATE_H=3.1-0.1; // -0.1 is for margin when stacking plates
 
 //for(z=[0.3:0.1:0.8])
         //translate([z*110,0,0])
-brick(1,2,STANDARD_H,studs=true,holes="bar");
+brick(2,4,STANDARD_H,studs=true,holes=false,support=false);
 /*difference(){
    rotate([90,0,0])
 cylinder(d=10,h=1);
@@ -352,10 +516,10 @@ bar_hole(10,z);
 }
 */
 
-
-
-
-
-
-
-
+/*
+bar(6);
+translate([10,0,0])
+bar(6);
+translate([20,0,0])
+bar(6);
+*/
