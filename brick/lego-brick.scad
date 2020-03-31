@@ -45,29 +45,29 @@ basercr=1;
 // dx and dy : total difference in x and y after transition
 // t: thickness
 module __base_transition(x,y,lowth,lowts,dx,dy,t,fill){
-     for(by=[0:lowth/lowts:lowth])
-            translate([by*(dx/lowth)/2,by*(dy/lowth)/2,lowth-by])
-            rounded_square_tube(w=x-by*(dx/lowth),l=y-by*(dy/lowth),h=lowth/lowts,t=t,r=basercr,fill=fill);   
+  sd=lowth/lowts;
+  for(by=[0:sd:lowth])
+    translate([by*(dx/lowth)/2,by*(dy/lowth)/2,lowth-by])
+      rounded_square_tube(w=x-by*(dx/lowth),l=y-by*(dy/lowth),h=sd,t=t,r=basercr,fill=fill);   
         
 }
 module __base_body(xmax,ymax,brick_h,fill){
-    x=xmax*8-0.2;
-    y=ymax*8-0.2;
-    h=brick_h;
-    r=0.2;
+  x=xmax*8-0.2;
+  y=ymax*8-0.2;
+  h=brick_h;
+  r=0.2;
 
-    lowth=0;   
-    lowts=2;
-    lowtw=0.1;   
-    translate([-3.9,-4+0.1,0]){
-         translate([0,0,-h+lowth])
-     rounded_square_tube(w=x,l=y,h=brick_h-lowth-bt,t=t,r=basercr,fill=fill);
-     translate([0,0,-h])
-     __base_transition(x,y,lowth,lowts,lowtw,lowtw,t,fill);
-     
-      
+  lowth=bt;   
+  lowts=4;
+  lowtw=bt;   
+
+  translate([-3.9,-4+0.1,0]){
+     translate([0,0,-h+lowth])
+       rounded_square_tube(w=x,l=y,h=brick_h-lowth-bt,t=t,r=basercr,fill=fill);
+  color("green")   translate([0,0,-h])
+       __base_transition(x,y,lowth,lowts,lowtw,lowtw,t,fill);
     }
-}
+  }
 module base(xmax,ymax,brick_h){
     
     // walls
@@ -77,19 +77,19 @@ module base(xmax,ymax,brick_h){
     y=ymax*8-0.2;
     h=brick_h;
     r=0.2;
-
-  
-     translate([-3.9,-4+0.1,-bt]){
+    
+ translate([-3.9,-4+0.1,0]) 
+  color("red") 
+    translate() mirror([0,0,-1]) __base_transition(x=x,y=y,lowth=bt,lowts=4,dx=bt,dy=bt,fill=true);
+     /*translate([-3.9,-4+0.1,-bt]){
      // base top    
    // translate([0,0,-bt])
-         
+        color("red") translate() mirror([0,0,-1]) __base_transition(x=x,y=y,lowth=bt,lowts=4,dx=bt,dy=bt,fill=true);
          // base transition
-         for(by=[0:bt/4:bt])
-            translate([by/2,by/2,by])
-           rounded_square_tube(w=x-by,l=y-by,h=bt/4,t=t,r=basercr,fill=true);
+         for(by=[0:bt/4:bt]) translate([by/2,by/2,by])     rounded_square_tube(w=x-by,l=y-by,h=bt/4,t=t,r=basercr,fill=true);
     //roundedcube(x,y,bt,r);
      }
- 
+ */
 }
 
 module base_stud_holes(xmax,ymax){
@@ -116,9 +116,9 @@ module __stud(sh){
   difference(){
     union(){
       rounded_cylinder(d=4.8,fn=36,h=sh,rt=0.2,rtw=0.2,rb=0,rbw=0);
-      translate([0,0,sh-0.5-0.2]) cylinder(d=4.8+tdg,$fn=36,h=0.5);
+      color("blue") translate([0,0,sh-0.5-0.2]) cylinder(d=4.8+tdg,$fn=36,h=0.5);
     }
-    translate([0,0,sh-sh-e]) cylinder(d=3,$fn=36,h=sh+e+e);
+      translate([0,0,sh-sh-e]) cylinder(d=3,$fn=36,h=sh+e+e);
   }  
 }
     
@@ -159,7 +159,7 @@ module __mesh_tubes(xmax,ymax,brick_h){
     for(y=[0:1:ymax])
       translate([x*8-8/2,y*8-8/2,-brick_h]){
         cylinder(d=td,$fn=36,h=brick_h);
-        cylinder(d=td+tdg,$fn=36,h=0.3);
+        color("blue")  cylinder(d=td+tdg,$fn=36,h=0.3);
       }
 }
 
@@ -262,12 +262,13 @@ module brick(xmax,ymax,brick_h,studs=true,holes=false,support=false){
 STANDARD_H=9.7-0.15-0.3;
 PLATE_H=3.1-0.1; // -0.1 is for margin when stacking plates
 
-brick(2,4,STANDARD_H,studs=true,holes="round",support=false);
+brick(1,2,STANDARD_H,studs=true,holes=false,support=false);
 
+/*
 translate([0,100,0]) base(2,4,STANDARD_H);
 translate([30,100,0]) mesh(2,4,STANDARD_H);
 translate([60,100,0]) studs(2,4);
-
+*/
 
 
 

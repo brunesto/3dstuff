@@ -30,4 +30,8 @@ module bar(u){
 }
 
 // --  test --
-bar(4);
+bar(6);
+translate([10,0,0])
+bar(6);
+translate([20,0,0])
+bar(6);
